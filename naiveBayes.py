@@ -13,28 +13,38 @@ url.close()
 y = df.iloc[:,8].values #dependent variable as y
 X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.3)
 
-def trainData(X_train, y_train):
-    X_entreno = X_train.iloc[:,0:8].values
+def trainData(X_train, y_train, flagPCA):
+    if flagPCA:
+        X_entreno = X_train.iloc[:,0:3].values
+    else:
+        X_entreno = X_train.iloc[:,0:8].values
     y_entreno = y_train
     print("*********************************************************************** \n")
     print("TRAINING DATA \n")
     print(X_train)
     print("\n")
     #finalData = [anomalousX,anomalousY,anomalousZ,normalX,normalY,normalZ]
-    dataTraining = makePCA(X_entreno,y_entreno)
+    dataTraining = 0
+    if not flagPCA:
+        dataTraining = makePCA(X_entreno,y_entreno)
     return (dataTraining,X_entreno,y_entreno)
 
-def testData(X_test, y_test):
+def testData(X_test, y_test, flagPCA):
     print("*********************************************************************** \n")
     print("TEST DATA \n")
     print(X_test)
     print("\n")
-    X_testeo = X_test.iloc[:,0:8].values
+    if flagPCA:
+        X_testeo = X_test.iloc[:,0:3].values
+    else:
+        X_testeo = X_test.iloc[:,0:8].values    
     y_testeo = y_test
-    dataTest = makePCA(X_testeo,y_testeo)
+    dataTest = 0
+    if not flagPCA:
+        dataTest = makePCA(X_testeo,y_testeo)
     return (dataTest, X_testeo, y_testeo)
 
-def bayesClassifier(X_entreno, y_entreno, X_testeo, y_testeo):
+def bayesClassifier(X_entreno, y_entreno, X_testeo, y_testeo, flagPCA):
     print("\n")
     model = GaussianNB()
     model.fit(X_entreno,y_entreno)
@@ -64,29 +74,30 @@ def bayesClassifier(X_entreno, y_entreno, X_testeo, y_testeo):
     print("*** ACCURACY GAUSSIAN **************")
     print(accuracy)
     print("\n")
-    model = MultinomialNB()
-    model.fit(X_entreno,y_entreno)
-    predicted_labels = model.predict(X_testeo)
-    accuracy = accuracy_score(y_testeo, predicted_labels)
-    listPredicted = predicted_labels.tolist()
-    listGivenTest = y_testeo.tolist()
-    count, countMatched = 0,0
-    #print("--GIVEN --- PREDICTED")
-    for label in listPredicted:
-        if str(listGivenTest[count]) == str(label):
-            countMatched += 1
-        #print(str(listGivenTest[count])+" --- "+str(label))
-        #print("------------------------")
-        count += 1
-    print("\n")
-    print("RESULTS: ")
-    print("--------------------------------------")
-    print(count)
-    print("Matched: "+str(countMatched)+" / "+str(count))
-    print("Ratio: "+str(float(countMatched)/float(count)))
-    print("*** ACCURACY MULTINOMIAL **************")
-    print(accuracy)
-    print("\n")
+    if not flagPCA:
+        model = MultinomialNB()
+        model.fit(X_entreno,y_entreno)
+        predicted_labels = model.predict(X_testeo)
+        accuracy = accuracy_score(y_testeo, predicted_labels)
+        listPredicted = predicted_labels.tolist()
+        listGivenTest = y_testeo.tolist()
+        count, countMatched = 0,0
+        #print("--GIVEN --- PREDICTED")
+        for label in listPredicted:
+            if str(listGivenTest[count]) == str(label):
+                countMatched += 1
+            #print(str(listGivenTest[count])+" --- "+str(label))
+            #print("------------------------")
+            count += 1
+        print("\n")
+        print("RESULTS: ")
+        print("--------------------------------------")
+        print(count)
+        print("Matched: "+str(countMatched)+" / "+str(count))
+        print("Ratio: "+str(float(countMatched)/float(count)))
+        print("*** ACCURACY MULTINOMIAL **************")
+        print(accuracy)
+        print("\n")
 
 def toCSVfile(dataTraining, dataTest):
     data = open("dataPCA.txt","w")
@@ -125,9 +136,19 @@ def toCSVfile(dataTraining, dataTest):
 
 
 #from raw data
-dataTraining,X_entreno,y_entreno = trainData(X_train,y_train)
-dataTest, X_testeo, y_testeo = testData(X_test,y_test)
-bayesClassifier(X_entreno,y_entreno,X_testeo,y_testeo)
+print("***** FROM ORIGINAL DATA WITH 8 FEATURES *******")
+dataTraining,X_entreno,y_entreno = trainData(X_train,y_train,False)
+dataTest, X_testeo, y_testeo = testData(X_test,y_test,False)
+bayesClassifier(X_entreno,y_entreno,X_testeo,y_testeo,False)
 
 #from PCA
+print("***** FROM PCA WITH 3 PCAs *******")
 toCSVfile(dataTraining,dataTest)
+url = open("dataPCA.csv","r")
+df = pd.read_csv(url,names=['PCA1','PCA2','PCA3','class'])
+url.close()
+y = df.iloc[:,3].values #dependent variable as y
+X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.3)
+dataTraining,X_entreno,y_entreno = trainData(X_train,y_train,True)
+dataTest, X_testeo, y_testeo = testData(X_test,y_test,True)
+bayesClassifier(X_entreno,y_entreno,X_testeo,y_testeo,True)
