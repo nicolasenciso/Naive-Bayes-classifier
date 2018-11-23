@@ -7,8 +7,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score
 
-url = open("dataPCA.csv","r")
-
+url = open("rawData.csv","r")
 df = pd.read_csv(url,names=['URLlong','characters','suspWord','sql','xss','crlf','kolmogorov','kullback','class'])
 url.close()
 y = df.iloc[:,8].values #dependent variable as y
@@ -89,9 +88,46 @@ def bayesClassifier(X_entreno, y_entreno, X_testeo, y_testeo):
     print(accuracy)
     print("\n")
 
+def toCSVfile(dataTraining, dataTest):
+    data = open("dataPCA.txt","w")
+    anomalousX,anomalousY,anomalousZ,normalX,normalY,normalZ = dataTraining
+    count = 0
+    for line in anomalousX:
+        X = str(line)
+        Y = str(anomalousY[count])
+        Z = str(anomalousZ[count])
+        data.writelines(X+","+Y+","+Z+","+"anomalous"+"\n")
+        count += 1
+    count = 0
+    for line in normalX:
+        X = str(line)
+        Y = str(normalY[count])
+        Z = str(normalZ[count])
+        data.writelines(X+","+Y+","+Z+","+"normal"+"\n")
+        count += 1
+    anomalousX,anomalousY,anomalousZ,normalX,normalY,normalZ = dataTest
+    count = 0
+    for line in anomalousX:
+        X = str(line)
+        Y = str(anomalousY[count])
+        Z = str(anomalousZ[count])
+        data.writelines(X+","+Y+","+Z+","+"anomalous"+"\n")
+        count += 1
+    count = 0
+    for line in normalX:
+        X = str(line)
+        Y = str(normalY[count])
+        Z = str(normalZ[count])
+        data.writelines(X+","+Y+","+Z+","+"normal"+"\n")
+        count += 1
+    
+    data.close()
+
+
 #from raw data
 dataTraining,X_entreno,y_entreno = trainData(X_train,y_train)
 dataTest, X_testeo, y_testeo = testData(X_test,y_test)
 bayesClassifier(X_entreno,y_entreno,X_testeo,y_testeo)
 
 #from PCA
+toCSVfile(dataTraining,dataTest)
