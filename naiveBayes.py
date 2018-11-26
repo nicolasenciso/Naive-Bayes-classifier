@@ -5,7 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.svm import SVC
 
 url = open("rawData.csv","r")
 df = pd.read_csv(url,names=['URLlong','characters','suspWord','sql','xss','crlf','kolmogorov','kullback','class'])
@@ -143,12 +144,14 @@ def toCSVfile2D(dataTraining, dataTest):
         X = str(line)
         Y = str(anomalousY[count])
         data.writelines(X+","+Y+","+"anomalous"+"\n")
+        #data.writelines(X+","+Y+","+"1"+"\n")
         count += 1
     count = 0
     for line in normalX:
         X = str(line)
         Y = str(normalY[count])
         data.writelines(X+","+Y+","+"normal"+"\n")
+        #data.writelines(X+","+Y+","+"0"+"\n")
         count += 1
     anomalousX,anomalousY,anomalousZ,normalX,normalY,normalZ = dataTest
     count = 0
@@ -156,23 +159,53 @@ def toCSVfile2D(dataTraining, dataTest):
         X = str(line)
         Y = str(anomalousY[count])
         data.writelines(X+","+Y+","+"anomalous"+"\n")
+        #data.writelines(X+","+Y+","+"1"+"\n")
         count += 1
     count = 0
     for line in normalX:
         X = str(line)
         Y = str(normalY[count])
         data.writelines(X+","+Y+","+"normal"+"\n")
+        #data.writelines(X+","+Y+","+"0"+"\n")
         count += 1
     
     data.close()
 
+def SVMclassifier(X_entreno,y_entreno,X_testeo, y_testeo):
+    svclassifier = SVC(kernel='linear')
+    svclassifier.fit(X_entreno,y_entreno)
+    y_pred = svclassifier.predict(X_testeo)
+    print("\n ***** RESULTS SVM LINEAR ********\n")
+    print(confusion_matrix(y_testeo,y_pred))  
+    print(classification_report(y_testeo,y_pred))  
 
+    svclassifier = SVC(kernel='poly', degree=8)
+    svclassifier.fit(X_entreno,y_entreno)
+    y_pred = svclassifier.predict(X_testeo)
+    print("\n ***** RESULTS SVM POLYNOMIAL ********\n")
+    print(confusion_matrix(y_testeo,y_pred))  
+    print(classification_report(y_testeo,y_pred))
+
+    svclassifier = SVC(kernel='rbf')
+    svclassifier.fit(X_entreno,y_entreno)
+    y_pred = svclassifier.predict(X_testeo)
+    print("\n ***** RESULTS SVM GAUSSIAN ********\n")
+    print(confusion_matrix(y_testeo,y_pred))  
+    print(classification_report(y_testeo,y_pred))
+
+    svclassifier = SVC(kernel='sigmoid')
+    svclassifier.fit(X_entreno,y_entreno)
+    y_pred = svclassifier.predict(X_testeo)
+    print("\n ***** RESULTS SVM SIGMOID ********\n")
+    print(confusion_matrix(y_testeo,y_pred))  
+    print(classification_report(y_testeo,y_pred))
 
 #from raw data
 dataTraining,X_entreno,y_entreno = trainData(X_train,y_train,False,False)
 dataTest, X_testeo, y_testeo = testData(X_test,y_test,False,False)
-print("\n***** FROM ORIGINAL DATA WITH 8 FEATURES *******\n")
+print("\n=================== FROM ORIGINAL DATA WITH 8 FEATURES ==========\n")
 bayesClassifier(X_entreno,y_entreno,X_testeo,y_testeo,False)
+#SVMclassifier(X_entreno,y_entreno,X_testeo,y_testeo)
 
 #from PCA
 toCSVfile(dataTraining,dataTest)
@@ -201,9 +234,10 @@ dataTraining2D,X_entreno2D,y_entreno2D = trainData(X_train2D,y_train2D,True,True
 dataTest, X_testeo, y_testeo = testData(X_test,y_test,True,False)
 dataTest2D, X_testeo2D, y_testeo2D = testData(X_test2D,y_test2D,True,True)
 
-print("\n***** FROM PCA WITH 3 PCAs *******\n")
+print("\n========================== FROM PCA WITH 3 PCAs ==================\n")
 bayesClassifier(X_entreno,y_entreno,X_testeo,y_testeo,True)
+SVMclassifier(X_entreno, y_entreno, X_testeo, y_testeo)
 
-print("\n*** FROM PCA WITH 2 PCAs *******\n")
+print("\n========================== FROM PCA WITH 2 PCAs ===================\n")
 bayesClassifier(X_entreno2D,y_entreno2D,X_testeo2D,y_testeo2D,True)
- 
+SVMclassifier(X_entreno2D, y_entreno2D, X_testeo2D, y_testeo2D)
